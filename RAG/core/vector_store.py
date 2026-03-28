@@ -62,6 +62,12 @@ class GitStoryDB:
             name="code_chunks", 
             embedding_function=OPENROUTER_EF
         )
+        
+        # Collection for commit history (PyDriller)
+        self.history_col = self.client.get_or_create_collection(
+            name="commit_history",
+            embedding_function=OPENROUTER_EF
+        )
 
     def add_summaries(self, summaries: list):
         """
@@ -97,3 +103,19 @@ class GitStoryDB:
 
         self.code_col.upsert(ids=ids, documents=docs, metadatas=metadatas)
         print(f"✅ Stored {len(ids)} AST chunks via OpenRouter.")
+    def add_commit_history(self, commits: list):
+        """
+        Stores PyDriller commit+diff records.
+        Expects list of dicts from history_indexer.py
+        """
+        if not commits:
+            return
+
+        BATCH_SIZE = 50   # OpenRouter embedding API limit guard
+        for i in range(0, len(commits), BATCH_SIZE):
+            batch = commits[i:i + BATCH_SIZE]
+            ids       = [c['id'] for c in batch]
+            docs      = [c['document'] for c in batch]
+            metadatas = [c['metadata'] for c in batch]
+            self.history_col.upsert(ids=ids, documents=docs, metadatas=metadatas)
+            print(f"✅ Stored commit batch {i//BATCH_SIZE + 1} ({len(batch)} records).")
