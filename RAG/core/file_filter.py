@@ -14,9 +14,12 @@ IGNORED_EXTENSIONS = {
     # Compiled Code
     '.pyc', '.exe', '.dll', '.so', '.o', '.a', '.class', '.jar',
     # Lock files (usually huge and unhelpful for a "story")
-    '.lock', 'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'
+    '.lock'
 }
 
+IGNORED_FILENAMES = {
+    'package-lock.json', 'yarn.lock', 'pnpm-lock.yaml'
+}
 # 3. Maximum size (500 KB) - Large files are usually data, not logic
 MAX_FILE_SIZE = 500 * 1024 
 
@@ -44,7 +47,8 @@ def should_keep_file(file_path: str, size: int) -> bool:
     filename = parts[-1]
     if filename.startswith('.') and filename not in ['.env', '.gitignore']:
         return False
-
+    if filename in IGNORED_FILENAMES:
+        return False
     # Rule 4: Check the extension
     _, ext = os.path.splitext(norm_path)
     if ext in IGNORED_EXTENSIONS:
