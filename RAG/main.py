@@ -1,10 +1,9 @@
 import os
 from pipelines.importer import import_repo
-from core.summarizer import summarize_file
+from core.summarizer import summarize_all_files
 from core.mapper import generate_global_map
 from core.chunker import chunk_file
 from core.vector_store import GitStoryDB
-# Assuming you named your query engine file core/query_engine.py
 from core.engine import GitStoryEngine 
 
 def run_git_story_pipeline(repo_url):
@@ -12,10 +11,7 @@ def run_git_story_pipeline(repo_url):
     
     # 1. Initialize Database
     db = GitStoryDB()
-    all_summaries = []
-
     # 2. Import and Filter Repo
-    # Returns [files_list, clone_path]
     result = import_repo(repo_url)
     files, clone_path = result.files, result.clone_path
     
@@ -23,28 +19,19 @@ def run_git_story_pipeline(repo_url):
         print("❌ No valid files found after filtering. Check file_filter.py.")
         return
 
-    # 3. Processing Loop: Summarize & AST Chunk
-    print(f"\n🧠 Processing {len(files)} files...")
-    for i, file_data in enumerate(files):
-        path = file_data['file_path']
-        content = file_data['content']
-        
-        print(f"   [{i+1}/{len(files)}] 📄 {path}")
+    # 3. Summarize all files in parallel
+    print(f"\n🧠 Summarizing {len(files)} files in parallel...")
+    all_summaries = summarize_all_files(files)
+    db.add_summaries(all_summaries)
+    print(f"   ✅ {len(all_summaries)} summaries stored.")
 
-        # A. Generate Summary
-        summary_result = summarize_file(path, content)
-        all_summaries.append(summary_result)
-        
-        # B. Store Summary in ChromaDB
-        db.add_summaries([summary_result])
-
-        # C. Generate AST Chunks (Tree-Sitter)
-        chunks = chunk_file(path, content)
-        
-        # D. Store AST Chunks in ChromaDB
+    # 4. AST Chunk all files
+    print(f"\n🌳 Chunking {len(files)} files with tree-sitter...")
+    for file_data in files:
+        chunks = chunk_file(file_data['file_path'], file_data['content'])
         db.add_ast_chunks(chunks)
 
-    # 4. Generate & Save Global Project Map
+    # 5. Generate & Save Global Project Map
     print("\n🗺️ Generating Global Architect Map...")
     project_map = generate_global_map(all_summaries)
     

@@ -1,11 +1,13 @@
-import requests
-import json
 import os
+import json
+import requests
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from dotenv import load_dotenv
-from config import MODEL
+from tenacity import retry, stop_after_attempt, wait_exponential
+from config import MODEL, API_RETRY_ATTEMPTS, API_RETRY_WAIT_MIN, API_RETRY_WAIT_MAX, MAX_SUMMARY_WORKERS
+
 load_dotenv()
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MODEL_NAME = MODEL
 
 SUMMARY_PROMPT = """You are analyzing source code. Given the file path and content, 
 write a concise 2-3 sentence summary covering:
@@ -79,7 +81,9 @@ def detect_language(file_path: str) -> str:
     '.proto': 'Protocol Buffers'
 }
     return mapping.get(ext, 'Unknown')
-
+    
+    
+@retry(stop=stop_after_attempt(API_RETRY_ATTEMPTS), wait=wait_exponential(min=API_RETRY_WAIT_MIN, max=API_RETRY_WAIT_MAX))
 def summarize_file(file_path: str, content: str) -> dict:
     # Nemotron can handle a lot! Let's increase the limit to 15,000 chars (~4k tokens)
     # This ensures we don't miss the middle/end of important files.
@@ -93,7 +97,7 @@ def summarize_file(file_path: str, content: str) -> dict:
                 "Content-Type": "application/json",
             },
             data=json.dumps({
-                "model": MODEL_NAME,
+                "model": MODEL,
                 "messages": [
                     {"role": "user", "content": SUMMARY_PROMPT.format(file_path=file_path, content=truncated)}
                 ],
@@ -116,4 +120,21 @@ def summarize_file(file_path: str, content: str) -> dict:
         "language": detect_language(file_path),
         "size_chars": len(content)
     }
+    
+    
+def summarize_all_files(files: list) -> list:
+    """Summarizes all files in parallel using a thread pool."""
+    results = []
+    with ThreadPoolExecutor(max_workers=MAX_SUMMARY_WORKERS) as pool:
+        futures = {
+            pool.submit(summarize_file, f['file_path'], f['content']): f
+            for f in files
+        }
+        for future in as_completed(futures):
+            try:
+                results.append(future.result())
+            except Exception as e:
+                f = futures[future]
+                print(f"❌ Failed to summarize {f['file_path']}: {e}")
+    return results
     
