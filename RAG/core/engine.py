@@ -42,12 +42,31 @@ class GitStoryEngine:
             n_results=5,
             where={"file_path": {"$in": relevant_files}}
         )
+        
+        
         code_context = ""
         for i, doc in enumerate(code_results['documents'][0]):
             meta = code_results['metadatas'][0][i]
             code_context += f"\nFILE: {meta['file_path']} ({meta['node_type']}: {meta['name']})\n{doc}\n"
 
-        # STEP 3: The Narrative Prompt
+        # STEP 3: Search commit history
+        history_context = ""
+        try:
+            history_results = self.db.history_col.query(
+                query_texts=[question],
+                n_results=4
+            )
+            for i, doc in enumerate(history_results['documents'][0]):
+                meta = history_results['metadatas'][0][i]
+                history_context += (
+                    f"\nCOMMIT {meta['hash']} by {meta['author']} on {meta['date']}: "
+                    f"{meta['commit_msg']}\nFILE: {meta['file']}\n{doc}\n"
+                )
+        except Exception:
+            history_context = ""   # history not indexed yet — silent fallback
+            
+            
+        # STEP 4: The Narrative Prompt
         prompt = f"""
         You are a 'Coding Partner' chatbot. Your goal is to provide a fast, technical, and direct answer based on the repository context.
         
@@ -56,6 +75,9 @@ class GitStoryEngine:
         
         [CODE SNIPPETS]
         {code_context}
+        
+        [COMMIT HISTORY]
+        {history_context if history_context else "No commit history indexed yet."}
         
         USER QUESTION: {question}
         
@@ -66,7 +88,7 @@ class GitStoryEngine:
         4. If you don't know, just say "I don't see that in the current index."
         """
 
-        # STEP 4: Call Nemotron
+        # STEP 5: Call Nemotron
         self.history.append({"role": "user", "content": prompt})
         try:
             response = requests.post(
