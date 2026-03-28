@@ -13,7 +13,7 @@ class GitStoryEngine:
     def __init__(self):
         self.db = GitStoryDB()
         self.model = MODEL
-        
+        self.history = []
         # Load the Global Map (The North Star)
         try:
             with open("project_map.json", "r" , encoding="utf-8") as f:
@@ -67,15 +67,23 @@ class GitStoryEngine:
         """
 
         # STEP 4: Call Nemotron
+        self.history.append({"role": "user", "content": prompt})
         try:
             response = requests.post(
                 url="https://openrouter.ai/api/v1/chat/completions",
                 headers={"Authorization": f"Bearer {OPENROUTER_API_KEY}"},
                 data=json.dumps({
                     "model": self.model,
-                    "messages": [{"role": "user", "content": prompt}]
+                    "messages": self.history
                 })
             )
-            return response.json()['choices'][0]['message']['content']
+            answer = response.json()['choices'][0]['message']['content']
+            self.history.append({"role": "assistant", "content": answer})
+            return answer
         except Exception as e:
+            self.history.pop()
             return f"Error narrating the story: {str(e)}"
+
+    def reset_history(self):
+        """Call this to start a fresh conversation."""
+        self.history = []
