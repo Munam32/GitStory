@@ -1,14 +1,23 @@
 # pipelines/repo_importer.py
 import git
 import os
-import shutil
 from pathlib import Path
+from dataclasses import dataclass
 from core.file_filter import should_keep_file
 
-def import_repo(repo_url: str, base_dir: str = "./repos") -> list:
+
+
+@dataclass
+class ImportResult:
+    files: list
+    clone_path: str
+
+
+
+def import_repo(repo_url: str, base_dir: str = "./repos") -> ImportResult:
     """
     Takes a GitHub URL, clones it, returns list of files ready for indexing.
-    Returns: [{"file_path": str, "content": str, "size": int}]
+    Returns: ImportResult(files=[{"file_path": str, "content": str, "size": int}], clone_path=str)
     """
     
     # Extract repo name from URL
@@ -24,8 +33,8 @@ def import_repo(repo_url: str, base_dir: str = "./repos") -> list:
         git.Repo.clone_from(
             repo_url,
             clone_path,
-            depth=1  # Shallow clone — only latest snapshot, no full history
-# PyDriller handles history separately, so depth=1 is fine here
+            depth=1,  # Shallow clone — only latest snapshot, no full history
+            kill_after_timeout=60
         )
         print("Clone done.")
     
@@ -52,5 +61,5 @@ def import_repo(repo_url: str, base_dir: str = "./repos") -> list:
             continue  # Skip unreadable files silently
     
     print(f"Imported {len(files)} files from {repo_name}")
-    return [files, clone_path]
+    return ImportResult(files=files, clone_path=clone_path)
     
