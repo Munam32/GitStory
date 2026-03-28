@@ -16,7 +16,8 @@ def run_git_story_pipeline(repo_url):
 
     # 2. Import and Filter Repo
     # Returns [files_list, clone_path]
-    files, clone_path = import_repo(repo_url)
+    result = import_repo(repo_url)
+    files, clone_path = result.files, result.clone_path
     
     if not files:
         print("❌ No valid files found after filtering. Check file_filter.py.")
