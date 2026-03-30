@@ -64,11 +64,6 @@ def analyze_repo(req: AnalyzeRequest):
         languages = repo.get_languages()
         
         pulls = repo.get_pulls(state='closed')
-        # --- 1. PYGITHUB EXTRACTION ---
-        repo = g.get_repo(target_name)
-        languages = repo.get_languages()
-        
-        pulls = repo.get_pulls(state='closed')
         recent_prs = []
         
         # Safely grab up to 5 PRs, but don't crash if there are 0!
@@ -76,6 +71,17 @@ def analyze_repo(req: AnalyzeRequest):
             recent_prs.append({"number": pr.number, "title": pr.title})
             if len(recent_prs) >= 5:
                 break
+
+        # --- NEW: FETCH GITHUB'S OFFICIAL LEADERBOARD ---
+        top_contributors = []
+        # get_contributors() automatically sorts by who has the most commits!
+        # We slice it [:10] so we only grab the top 10 and keep the API lightning fast.
+        for contributor in repo.get_contributors()[:10]:
+            top_contributors.append({
+                "name": contributor.login, # Their GitHub username
+                "commits": contributor.contributions, # Total commits
+                "avatar_url": contributor.avatar_url # Their profile picture!
+            })
 
         # --- 2. PYDRILLER EXTRACTION ---
         user_commits = {}
@@ -112,7 +118,7 @@ def analyze_repo(req: AnalyzeRequest):
             "data": {
                 "languages": languages,
                 "recent_prs": recent_prs,
-                "top_contributors": user_commits,
+                "top_contributors": top_contributors,
                 "file_hotzones": file_hotzones,
                 "recent_commits": commit_history # NEW: Added to the final payload!
             }
