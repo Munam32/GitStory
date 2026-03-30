@@ -1,5 +1,5 @@
 "use client";
-
+import Leaderboard from '../components/Leaderboard';
 import { useState } from "react";
 import { signIn, signOut, useSession, SessionProvider } from "next-auth/react";
 
@@ -144,6 +144,12 @@ function GitStoryDashboard() {
             <pre style={{ fontSize: "14px" }}>
               {JSON.stringify(results.data, null, 2)}
             </pre>
+            {/* Only show the leaderboard IF we have results from the server */}
+            {results && results.data && results.data.top_contributors && (
+              <div className="mt-8 flex justify-center">
+                <Leaderboard contributors={results.data.top_contributors} />
+              </div>
+            )}
           </div>
         )}
       </div>
