@@ -33,8 +33,8 @@ def import_repo(repo_url: str, base_dir: str = "./repos") -> ImportResult:
         git.Repo.clone_from(
             repo_url,
             clone_path,
-            depth=1,  # Shallow clone — only latest snapshot, no full history
-            kill_after_timeout=60
+            filter="blob:none"
+            #kill_after_timeout=60    we can uncheck this becase this is for linux and deployment is  mostly on linux systems
         )
         print("Clone done.")
     
