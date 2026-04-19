@@ -7,7 +7,7 @@ node_modules/
 venv/
 __pycache__/
 *.pyc
-Sabihenv/
+.Sabihenv/
 .env
 .claude
 
