@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from "react";
 import { signIn, signOut, useSession, SessionProvider } from "next-auth/react";
+import Link from "next/link";
 
 const API = "http://localhost:8000";
 
@@ -247,6 +248,13 @@ function GitStoryDashboard() {
 
   return (
     <div style={styles.page}>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginBottom: '20px' }}>
+        <Link href="/" style={{ fontWeight: 700, color: '#2563eb' }}>Dashboard</Link>
+        <Link href="/timeline" style={{ color: '#6b7280' }}>Timeline</Link>
+        <Link href="/hotzone" style={{ color: '#6b7280' }}>Hotzone</Link>
+        <Link href="/review" style={{ color: '#6b7280' }}>Review</Link>
+      </div>
+
       <h1 style={styles.title}>GitStory</h1>
       <p style={styles.subtitle}>Mine, Index, and Chat with any GitHub Repository</p>
 
