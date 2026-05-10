@@ -1,0 +1,12 @@
+fastapi
+uvicorn
+pydriller
+lizard
+google-generativeai
+openai
+pydantic
+GitPython
+semgrep
+pandas
+plotly
+PyGithub
