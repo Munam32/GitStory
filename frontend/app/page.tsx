@@ -1,6 +1,8 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import Leaderboard from '../components/Leaderboard';
+import { useState } from "react";
 import { signIn, signOut, useSession, SessionProvider } from "next-auth/react";
 
 const API = "http://localhost:8000";
@@ -372,56 +374,20 @@ function GitStoryDashboard() {
         </div>
       )}
 
-      {/* ── Chat Panel ──────────────────────────────────────────────────── */}
-      <div style={{ ...styles.card, marginTop: 24 }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <h2 style={styles.cardTitle}>
-            Chat with Repo{selectedRepo ? `: ${selectedRepo}` : ""}
-          </h2>
-          {selectedRepo && (
-            <button style={styles.ghostBtn} onClick={resetChat}>
-              Clear history
-            </button>
-          )}
-        </div>
-
-        {!selectedRepo ? (
-          <p style={{ color: "#6b7280", fontSize: 14 }}>
-            Index a repo above, then click its name to select it for chat.
-          </p>
-        ) : (
-          <>
-            <div style={styles.chatWindow}>
-              {messages.length === 0 && (
-                <p style={{ color: "#9ca3af", fontSize: 14, margin: "auto" }}>
-                  Ask anything about <strong>{selectedRepo}</strong>...
-                </p>
-              )}
-              {messages.map((m, i) => (
-                <ChatBubble key={i} role={m.role} content={m.content} />
-              ))}
-              <div ref={chatBottomRef} />
-            </div>
-
-            <div style={{ display: "flex", gap: 8, marginTop: 12 }}>
-              <input
-                style={{ ...styles.input, flex: 1, margin: 0 }}
-                type="text"
-                placeholder="Ask about the codebase..."
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && !chatLoading && sendMessage()}
-                disabled={chatLoading}
-              />
-              <button
-                style={{ ...styles.btn, width: "auto", padding: "0 20px", margin: 0 }}
-                onClick={sendMessage}
-                disabled={chatLoading || !chatInput.trim()}
-              >
-                {chatLoading ? "..." : "Send"}
-              </button>
-            </div>
-          </>
+        {/* IF PYTHON SENDS SUCCESS DATA, SHOW IT IN GREEN! */}
+        {results && results.status === "Success" && (
+          <div style={{ padding: "20px", background: "#1e1e1e", color: "#00ff00", borderRadius: "10px", overflowX: "auto" }}>
+            <h3>📊 Extracted Data for: {results.repo_analyzed}</h3>
+            <pre style={{ fontSize: "14px" }}>
+              {JSON.stringify(results.data, null, 2)}
+            </pre>
+            {/* Only show the leaderboard IF we have results from the server */}
+            {results && results.data && results.data.top_contributors && (
+              <div className="mt-8 flex justify-center">
+                <Leaderboard contributors={results.data.top_contributors} />
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

@@ -142,20 +142,32 @@ def analyze_repo(req: AnalyzeRequest):
         g = Github()
 
     try:
-        # ── PyGithub metadata ──────────────────────────────────────────
+        # --- 1. PYGITHUB EXTRACTION ---
         repo = g.get_repo(target_name)
         languages = repo.get_languages()
-
+        
+        pulls = repo.get_pulls(state='closed')
         recent_prs = []
         for pr in repo.get_pulls(state='closed'):
             recent_prs.append({"number": pr.number, "title": pr.title})
             if len(recent_prs) >= 5:
                 break
 
-        # ── PyDriller commit history ───────────────────────────────────
-        user_commits: dict[str, int] = {}
-        file_hotzones: dict[str, int] = {}
-        commit_history = []
+        # --- NEW: FETCH GITHUB'S OFFICIAL LEADERBOARD ---
+        top_contributors = []
+        # get_contributors() automatically sorts by who has the most commits!
+        # We slice it [:10] so we only grab the top 10 and keep the API lightning fast.
+        for contributor in repo.get_contributors()[:10]:
+            top_contributors.append({
+                "name": contributor.login, # Their GitHub username
+                "commits": contributor.contributions, # Total commits
+                "avatar_url": contributor.avatar_url # Their profile picture!
+            })
+
+        # --- 2. PYDRILLER EXTRACTION ---
+        user_commits = {}
+        file_hotzones = {}
+        commit_history = [] # NEW: We will store the actual story here!
         commit_count = 0
 
         for commit in Repository(clone_url).traverse_commits():
@@ -178,11 +190,11 @@ def analyze_repo(req: AnalyzeRequest):
             "repo_analyzed": target_name,
             "is_private": req.is_private,
             "data": {
-                "languages":       languages,
-                "recent_prs":      recent_prs,
-                "top_contributors": user_commits,
-                "file_hotzones":   file_hotzones,
-                "recent_commits":  commit_history,
+                "languages": languages,
+                "recent_prs": recent_prs,
+                "top_contributors": top_contributors,
+                "file_hotzones": file_hotzones,
+                "recent_commits": commit_history # NEW: Added to the final payload!
             }
         }
 
