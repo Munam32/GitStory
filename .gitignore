@@ -1,61 +1,15 @@
-# Environments & Secrets (CRITICAL)
-.env
-.env.*
-.venv
-env/
-venv/
-
-# Java / JDK (Situation Specific)
-oracleJdk-26/
-*.class
-*.jar
-*.war
-*.ear
-
-# Node.js / JavaScript
+# Next.js & Node
 node_modules/
-npm-debug.log*
-yarn-error.log*
-.npm/
+.next/
+.env.local
 
-# Python Cache & Bytecode
+# Python
+venv/
 __pycache__/
-*.py[cod]
-*$py.class
-*.pyo
-.pytest_cache/
-.coverage
-htmlcov/
+*.pyc
+.Sabihenv/
+.env
+.claude
 
-# Logs
-*.log
-logs/
-
-# Tree-sitter, Build Artifacts & Compiled Output
-build/
-dist/
-out/
-bin/
-obj/
-*.so
-*.dll
-*.dylib
-
-# IDEs & Editor Files
-.vscode/
-.idea/
-*.swp
-*.swo
-*.suo
-*.sln
-.settings/
-.project
-.classpath
-
-# OS Generated Files
+# OS Files
 .DS_Store
-.DS_Store?
-._*
-Thumbs.db
-ehthumbs.db
-Desktop.ini
