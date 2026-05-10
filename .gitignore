@@ -7,6 +7,9 @@ node_modules/
 venv/
 __pycache__/
 *.pyc
+.Sabihenv/
+.env
+.claude
 
 # OS Files
 .DS_Store
