@@ -1,15 +1,65 @@
-# Next.js & Node
-node_modules/
-.next/
-.env.local
-
-# Python
-venv/
-__pycache__/
-*.pyc
-.Sabihenv/
+# Environments & Secrets (CRITICAL)
 .env
+.env.*
+.venv
+env/
+venv/
+.Sabihenv/
 .claude
 
-# OS Files
+# Java / JDK (Situation Specific)
+oracleJdk-26/
+*.class
+*.jar
+*.war
+*.ear
+
+# Next.js, Node.js / JavaScript
+node_modules/
+.next/
+npm-debug.log*
+yarn-error.log*
+.npm/
+
+# Python Cache & Bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyo
+*.pyc
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs
+*.log
+logs/
+
+# Build Artifacts & Compiled Output
+build/
+dist/
+out/
+bin/
+obj/
+*.so
+*.dll
+*.dylib
+
+# IDEs & Editor Files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.suo
+*.sln
+.settings/
+.project
+.classpath
+
+# OS Generated Files
 .DS_Store
+.DS_Store?
+._*
+Thumbs.db
+ehthumbs.db
+Desktop.ini
