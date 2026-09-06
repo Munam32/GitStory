@@ -473,5 +473,5 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 ---
 
 <p align="center">
-  Built with ❤️ by <a href="https://github.com/MSabihkhan">Muhammad Sabih ud din khan</a>
+  Built with ❤️ by <a href="https://github.com/MSabihkhan">Muhammad Sabih ud din khan</a> , <a href="https://github.com/JunaidMu">joony bhai</a> , <a href="https://github.com/Bilal-AhmadKhan">Bilal Ahmed Khan</a> , <a href="https://github.com/Munam32">Abdul Munam</a> , <a href="https://github.com/Ahmad-Muaz-Asad">Ahmed Muaz</a>
 </p>
