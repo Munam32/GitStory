@@ -216,12 +216,11 @@ venv\Scripts\activate
 # macOS/Linux
 source venv/bin/activate
 
-# Install dependencies
+# Install dependencies (API, analysis, RAG and docgen are all in one file)
 pip install -r requirements.txt
 
-# Copy and configure environment
-cp .env.example .env
-# Edit .env with your settings (see Environment Configuration below)
+# Configure environment: create .env in the project root
+# (see Environment Configuration below)
 
 # Start the server
 python -m uvicorn src.main:app --reload --port 8000
@@ -243,13 +242,6 @@ cp .env.local.example .env.local
 npm run dev
 ```
 
-### 4. RAG Dependencies (for AI Chat)
-
-```bash
-# From project root
-pip install -r requirements.txt
-```
-
 The app will be available at **[http://localhost:3000](http://localhost:3000)**.
 
 ---
@@ -269,10 +261,11 @@ HOST=0.0.0.0
 PORT=8000
 FRONTEND_URL=http://localhost:3000
 
-# RAG Paths
-RAG_CHROMA_PATH=./RAG/chroma_db
-RAG_MAPS_DIR=./RAG/project_maps
-RAG_REPOS_DIR=./RAG/repos
+# Runtime data paths (optional; relative paths resolve against backend/)
+RAG_CHROMA_PATH=data/chroma_db
+RAG_MAPS_DIR=data/project_maps
+RAG_REPOS_DIR=data/repos
+ANALYSIS_REPOS_DIR=data/analysis_repos
 
 # GitHub OAuth (optional)
 GITHUB_CLIENT_ID=your-github-client-id
@@ -424,29 +417,28 @@ GitStory/
 │   │   │   ├── repository.py
 │   │   │   ├── project.py
 │   │   │   └── token.py
-│   │   └── middleware/
-│   │       └── auth.py          # JWT middleware
-│   └── requirements.txt
+│   │   ├── middleware/
+│   │   │   └── auth.py          # JWT middleware
+│   │   ├── analysis/            # Git-history analysis used by the API
+│   │   │   ├── timeline.py      # Commit data extraction
+│   │   │   ├── narration.py     # AI narrative generation
+│   │   │   ├── heatmap.py       # File churn analysis (PyDriller)
+│   │   │   ├── code_review.py   # AI code review (Semgrep + LLM)
+│   │   │   └── repo_utils.py    # GitHub URL parsing
+│   │   ├── rag/                 # RAG pipeline
+│   │   │   ├── pipeline.py      # Pipeline orchestrator
+│   │   │   ├── rag_config.py    # Model & tuning config
+│   │   │   ├── core/            # engine, chunker, summarizer, mapper, vector_store, file_filter
+│   │   │   └── pipelines/       # importer (clone), history_indexer (PyDriller)
+│   │   └── docgen/              # Auto-documentation (parser → module map → LLM docs)
+│   │       └── app.py           # Standalone docgen API
+│   ├── tests/                   # pytest tests (+ fixtures/); tests/live/ needs a server or keys
+│   ├── data/                    # Runtime data: ChromaDB, project maps, clones (gitignored)
+│   ├── run.py                   # Dev server launcher
+│   └── requirements.txt         # All Python dependencies
 │
-├── RAG/                         # RAG Pipeline Module
-│   ├── main.py                  # Pipeline orchestrator
-│   ├── rag_config.py            # Model & tuning config
-│   ├── core/
-│   │   ├── engine.py            # Chat engine (sync + streaming)
-│   │   ├── chunker.py           # tree-sitter AST chunking
-│   │   ├── summarizer.py        # LLM file summarization
-│   │   ├── mapper.py            # Global project map generator
-│   │   ├── vector_store.py      # ChromaDB wrapper
-│   │   └── file_filter.py       # File filtering rules
-│   └── pipelines/
-│       ├── importer.py          # Repo cloning & import
-│       └── history_indexer.py   # PyDriller commit indexing
-│
-├── code_review.py               # AI code review (Semgrep + LLM)
-├── heatmap.py                   # File churn analysis (PyDriller)
-├── timeline.py                  # Commit data extraction
-├── narration.py                 # AI narrative generation
-├── requirements.txt             # Root Python dependencies
+├── legacy/                      # Superseded standalone servers (reference only)
+├── docs/                        # Testing notes, QA report
 └── .env                         # Environment configuration
 ```
 

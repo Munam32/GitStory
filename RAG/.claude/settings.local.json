@@ -1,9 +1,0 @@
-{
-  "permissions": {
-    "allow": [
-      "Bash(grep -E \"\\\\.py$\")",
-      "Bash(grep:*)",
-      "Bash(.Sabihenv/Scripts/python -m py_compile RAG/core/engine.py RAG/core/vector_store.py RAG/main.py server.py)"
-    ]
-  }
-}

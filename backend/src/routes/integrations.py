@@ -4,17 +4,9 @@ from pydantic import BaseModel
 from typing import Optional
 import uuid
 import os
-import sys
-
-# Add parent directory to path for existing modules (timeline, narration, etc.)
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-sys.path.insert(0, PROJECT_ROOT)
-
-# Add RAG directory to path for RAG imports (must come AFTER project root to avoid config conflict)
-RAG_DIR = os.path.join(PROJECT_ROOT, "RAG")
-sys.path.insert(0, RAG_DIR)
 
 from src.config.database import get_db
+from src.config.settings import settings
 from src.middleware.auth import get_current_user
 from src.models.user import User
 
@@ -81,7 +73,7 @@ def _ensure_repo_cloned(repo_url: str) -> str:
         raise ValueError("Invalid GitHub URL")
     
     owner, repo = path_parts[0], path_parts[1].replace(".git", "")
-    local_path = os.path.join(PROJECT_ROOT, "repos", f"{owner}_{repo}")
+    local_path = os.path.join(settings.analysis_dir, f"{owner}_{repo}")
     
     if os.path.exists(local_path):
         # Check if it's a valid git repo with commits
@@ -100,7 +92,7 @@ def _ensure_repo_cloned(repo_url: str) -> str:
         import shutil
         shutil.rmtree(local_path, ignore_errors=True)
     
-    os.makedirs(os.path.join(PROJECT_ROOT, "repos"), exist_ok=True)
+    os.makedirs(settings.analysis_dir, exist_ok=True)
     
     clone_url = f"https://github.com/{owner}/{repo}.git"
     import subprocess
@@ -208,7 +200,7 @@ def index_repo(
     db: Session = Depends(get_db)
 ):
     """Start RAG indexing for a repository."""
-    from RAG.main import run_git_story_pipeline
+    from src.rag.pipeline import run_git_story_pipeline
 
     user = db.query(User).filter(User.id == current_user["user_id"]).first()
     token = req.token or user.github_token if user else None
@@ -216,8 +208,8 @@ def index_repo(
     job_id = str(uuid.uuid4())
     repo_name = _repo_name_from_url(req.repo_url)
 
-    CHROMA_PATH = os.path.join(PROJECT_ROOT, "RAG", "chroma_db")
-    MAPS_DIR = os.path.join(PROJECT_ROOT, "RAG", "project_maps")
+    CHROMA_PATH = settings.chroma_path
+    MAPS_DIR = settings.maps_dir
 
     _index_jobs[job_id] = {
         "status": "pending",
@@ -237,7 +229,8 @@ def index_repo(
             run_git_story_pipeline(
                 repo_url=cloneable_url,
                 db_path=CHROMA_PATH,
-                maps_dir=MAPS_DIR
+                maps_dir=MAPS_DIR,
+                repos_dir=settings.repos_dir
             )
             _index_jobs[job_id]["status"] = "done"
             _index_jobs[job_id]["repo_name"] = repo_name
@@ -278,10 +271,10 @@ async def chat_with_repo(
 ):
     """Chat with indexed repository (SSE)."""
     from fastapi.responses import StreamingResponse
-    from RAG.core.engine import GitStoryEngine
+    from src.rag.core.engine import GitStoryEngine
 
-    CHROMA_PATH = os.path.join(PROJECT_ROOT, "RAG", "chroma_db")
-    MAPS_DIR = os.path.join(PROJECT_ROOT, "RAG", "project_maps")
+    CHROMA_PATH = settings.chroma_path
+    MAPS_DIR = settings.maps_dir
 
     map_path = os.path.join(MAPS_DIR, f"{req.repo_name}.json")
     if not os.path.exists(map_path):
@@ -323,8 +316,8 @@ async def get_timeline(
     current_user: dict = Depends(get_current_user)
 ):
     """Get timeline narration."""
-    from timeline import extract_repo_data
-    from narration import NarrationGenerator
+    from src.analysis.timeline import extract_repo_data
+    from src.analysis.narration import NarrationGenerator
 
     local_path = _ensure_repo_cloned(repo_url)
     commits = extract_repo_data(local_path, max_commits=50)
@@ -343,7 +336,7 @@ async def get_hotzone(
     current_user: dict = Depends(get_current_user)
 ):
     """Get file churn data."""
-    from heatmap import get_churn_data
+    from src.analysis.heatmap import get_churn_data
 
     local_path = _ensure_repo_cloned(repo_url)
     data = get_churn_data(local_path)
@@ -359,7 +352,7 @@ async def code_review(
     current_user: dict = Depends(get_current_user)
 ):
     """Generate AI code review."""
-    from code_review import CodeReviewer
+    from src.analysis.code_review import CodeReviewer
 
     reviewer = CodeReviewer()
     result = reviewer.generate_review(req.repo_url, req.github_token, req.commit_count)

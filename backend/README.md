@@ -91,8 +91,12 @@ Server runs at: http://localhost:8000
 ## Testing
 
 ```bash
-# Run tests
+# Run tests (pytest.ini sets pythonpath and skips tests/live/)
 pytest
+pytest tests/test_parser.py
+
+# Live scripts need a running server / network / API keys
+python -m tests.live.test_api
 
 # Test a specific endpoint
 curl -X POST http://localhost:8000/api/auth/register \
@@ -112,8 +116,13 @@ backend/
 │   ├── middleware/    # Auth middleware
 │   ├── services/      # External integrations
 │   ├── utils/         # Helper functions
+│   ├── analysis/      # Timeline, narration, churn heatmap, code review
+│   ├── rag/           # RAG indexing pipeline + chat engine
+│   ├── docgen/        # Auto-documentation pipeline (standalone app.py)
 │   └── main.py        # App entry point
-├── .env.example       # Environment variables template
-├── requirements.txt   # Python dependencies
+├── tests/             # pytest tests + fixtures/; live/ = needs server/keys
+├── data/              # Runtime data: ChromaDB, project maps, clones (gitignored)
+├── pytest.ini
+├── requirements.txt   # Python dependencies (whole backend)
 └── README.md          # This file
 ```

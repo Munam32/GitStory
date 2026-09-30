@@ -4,8 +4,18 @@ from pydantic_settings import BaseSettings
 from pathlib import Path
 from dotenv import load_dotenv
 
-env_path = Path(__file__).parent.parent.parent / ".env"
-load_dotenv(env_path)
+BACKEND_DIR = Path(__file__).resolve().parent.parent.parent
+REPO_ROOT = BACKEND_DIR.parent
+
+# Root .env is the documented location; backend/.env (if present) overrides it
+load_dotenv(REPO_ROOT / ".env")
+load_dotenv(BACKEND_DIR / ".env", override=True)
+
+
+def _resolve(path: str) -> str:
+    """Resolve a relative path against backend/ so it doesn't depend on the CWD."""
+    p = Path(path)
+    return str(p if p.is_absolute() else (BACKEND_DIR / p).resolve())
 
 
 class Settings(BaseSettings):
@@ -41,10 +51,27 @@ class Settings(BaseSettings):
     # CORS
     frontend_url: str = "http://localhost:3000"
 
-    # RAG
-    rag_chroma_path: str = "../RAG/chroma_db"
-    rag_maps_dir: str = "../RAG/project_maps"
-    rag_repos_dir: str = "../RAG/repos"
+    # Runtime data (relative paths are resolved against backend/)
+    rag_chroma_path: str = "data/chroma_db"
+    rag_maps_dir: str = "data/project_maps"
+    rag_repos_dir: str = "data/repos"
+    analysis_repos_dir: str = "data/analysis_repos"
+
+    @property
+    def chroma_path(self) -> str:
+        return _resolve(self.rag_chroma_path)
+
+    @property
+    def maps_dir(self) -> str:
+        return _resolve(self.rag_maps_dir)
+
+    @property
+    def repos_dir(self) -> str:
+        return _resolve(self.rag_repos_dir)
+
+    @property
+    def analysis_dir(self) -> str:
+        return _resolve(self.analysis_repos_dir)
 
     class Config:
         env_file = ".env"

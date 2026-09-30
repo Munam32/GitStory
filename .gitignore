@@ -13,22 +13,17 @@ venv/
 # ─── AI Agent / Tool Directories ────────────
 .claude/
 .gemini/
+CLAUDE.md
 
 # ─── Databases (created at runtime) ─────────
 *.db
 *.sqlite3
 *.sqlite
 
-# ─── ChromaDB Vector Stores ─────────────────
+# ─── Runtime Data (vector stores, clones, project maps) ─
+backend/data/
 chroma_db/
-RAG/chroma_db/
-
-# ─── Cloned Repositories (runtime data) ─────
 repos/
-backend/repos/
-
-# ─── RAG Generated Artifacts ────────────────
-RAG/project_maps/
 
 # ─── Generated / Exported Docs ──────────────
 EXPORTED_README*.md
